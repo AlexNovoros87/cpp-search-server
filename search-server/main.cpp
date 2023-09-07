@@ -103,6 +103,12 @@ private:
         return word_to_document_freqs_.count(value) > 0;
     }
 
+    double CalculateIdf(const string & word)const {
+        return (double)log(static_cast<double>(document_count_) / static_cast<double>(word_to_document_freqs_.at(word).size()));
+    };
+    
+    
+    
     vector<string> SplitIntoWordsNoStop(const string& text) const {
         vector<string> words;
         for (const string& word : SplitIntoWords(text)) {
@@ -141,17 +147,18 @@ private:
                 }
                 else if (IsInDocument(word)) { plus_words.insert(word); }
             }
-        }
+        };
 
-        //удаляем минус-слова из коллеции плюс-слов
+        
         for (auto i : minus_words) {
             if (plus_words.count(i) > 0)plus_words.erase(i);
-        }
+        };
+
+        
 
         for (const string& word : plus_words) {
-            //определяем idf не создавая отдельной фукции
-            const double idf = (double)log(static_cast<double>(document_count_)
-                / static_cast<double>(word_to_document_freqs_.at(word).size()));
+            
+           const double idf = CalculateIdf(word);
 
             for (const auto& [id, sum] : word_to_document_freqs_.at(word)) {
                 to_check[id] += sum * idf;
