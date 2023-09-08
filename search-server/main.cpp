@@ -75,7 +75,14 @@ public:
         }
         documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
     }
+
+    
+    
    
+    
+    
+    
+    
     vector<Document> FindTopDocuments(const string& raw_query) const {
         const Query query = ParseQuery(raw_query);
         auto predicate = [](int id, DocumentStatus status, int rating) { return status == DocumentStatus::ACTUAL; };
@@ -85,26 +92,22 @@ public:
     }
 
 
-   
-    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status_getted) const {
+
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus predicate) const {
+        
+        auto prdct = [predicate](int document_id, DocumentStatus status, int rating) { return status == predicate; };
+        vector<Document> matched_documents = FindTopDocuments(raw_query, prdct);
+        return matched_documents;
+    }
+
+
+    template<typename Predicate>
+    vector<Document> FindTopDocuments(const string& raw_query, Predicate predicate = true) const {
         const Query query = ParseQuery(raw_query);
         vector<Document> matched_documents;
-        matched_documents = FindAllDocuments(query, [status_getted](int document_id, DocumentStatus status, int rating) { return status == status_getted; });
+        matched_documents = FindAllDocuments(query, predicate);
         SortMatchedContainer(matched_documents);
         return matched_documents;
-
-    }
-    
-    
-    template<typename Predicate>
-      vector<Document> FindTopDocuments(const string& raw_query, Predicate predicate = true) const {
-          const Query query = ParseQuery(raw_query);
-          vector<Document> matched_documents;
-        
-          matched_documents = FindAllDocuments(query, predicate);
-          SortMatchedContainer(matched_documents);
-          return matched_documents;
-
     }
 
     int GetDocumentCount() const {
@@ -163,7 +166,7 @@ private:
         if (ratings.empty()) {
             return 0;
         }
-        int rating_sum = accumulate(ratings.begin(),ratings.end(),0);
+        int rating_sum = accumulate(ratings.begin(), ratings.end(), 0);
         return rating_sum / static_cast<int>(ratings.size());
     }
 
@@ -246,7 +249,7 @@ private:
         return matched_documents;
     }
 
-   //сортировка вынесена в отдельный метод
+    //сортировка вынесена в отдельный метод
     void SortMatchedContainer(vector<Document>& matched_documents) const
     {
         sort(matched_documents.begin(), matched_documents.end(),
