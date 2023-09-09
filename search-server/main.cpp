@@ -75,29 +75,16 @@ public:
         }
         documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
     }
-
-    
-    
-   
-    
-    
-    
     
     vector<Document> FindTopDocuments(const string& raw_query) const {
-        const Query query = ParseQuery(raw_query);
-        auto predicate = [](int id, DocumentStatus status, int rating) { return status == DocumentStatus::ACTUAL; };
-        auto matched_documents = FindAllDocuments(query, predicate);
-        SortMatchedContainer(matched_documents);
-        return matched_documents;
+        
+        return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
     }
 
 
-
     vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus predicate) const {
-        
-        auto prdct = [predicate](int document_id, DocumentStatus status, int rating) { return status == predicate; };
-        vector<Document> matched_documents = FindTopDocuments(raw_query, prdct);
-        return matched_documents;
+
+        return FindTopDocuments(raw_query, [predicate](int document_id, DocumentStatus document_status, int rating) { return document_status == predicate; });
     }
 
 
@@ -223,11 +210,7 @@ private:
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
 
             for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
-                //  int id = document_id;
-                //  int rt = documents_.at(id).rating;
-                //   DocumentStatus st = documents_.at(id).status;
-                //  bool a = predicate(document_id, st, rt);
-                // 
+
                 if (predicate(document_id, documents_.at(document_id).status, documents_.at(document_id).rating))document_to_relevance[document_id] += term_freq * inverse_document_freq;
             }
         }
