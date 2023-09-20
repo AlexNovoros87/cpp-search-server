@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 #include <map>
+#include<numeric>
 #include <set>
 #include<stdexcept>
 #include <string>
@@ -10,6 +11,22 @@
 
 using namespace std;
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+const double EPSILON = 1e-6;
+
+/*
+УВАЖАЕМЫЙ КОД-РЕВЬЮЕР!!!
+
+ Я решил сделать многофункциональную функцию:
+ bool IsAcceptQuery(const string& query) const
+    {
+        if (!IsValidWord(query))return false; - ПРОВЕРКА НА СОДЕРЖАНИЕ СПЕЦСИМВОЛОВ
+        
+        else  if (query[query.size() - 1] == '-')return false; - ПРОВЕРКА ПОСЛЕДНЕГО СИМВОЛА '-' 
+        else  if (query.find("- ") != query.npos || query.find("--") != query.npos) return false; - ПРОВЕРКА НА НАЛИЧИЕ "--" И "- "
+        else return true;
+    }
+    Что бы универсально подойти к требованиям исключений я решил сделать одну функцию на все случаи ошибок string
+*/
 
 string ReadLine() {
     string s;
@@ -80,18 +97,12 @@ enum class DocumentStatus {
 class SearchServer {
 public:
 
-   
-
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
 
-        for (const string& word : stop_words_) 
-        {
-            if (!IsAcceptQuery(word)) {
-                throw invalid_argument("Constructor: Invalid Input String");
-            }
-        
+        if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
+            throw invalid_argument("Constructor: Invalid String"s);
         }
     }
 
@@ -119,14 +130,12 @@ public:
     template <typename DocumentPredicate>
     vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
         
-        if (!IsAcceptQuery(raw_query))throw invalid_argument("Find Top document: Incorrect String input");
-
         const Query query = ParseQuery(raw_query);
         vector<Document>result = FindAllDocuments(query, document_predicate);
 
         sort(result.begin(), result.end(),
             [](const Document& lhs, const Document& rhs) {
-                if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                if (abs(lhs.relevance - rhs.relevance) < EPSILON) {
                     return lhs.rating > rhs.rating;
                 }
                 else {
@@ -153,8 +162,6 @@ public:
 
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
-
-        if (!IsAcceptQuery(raw_query)) throw invalid_argument("Match document: Incorrect input string");
 
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
@@ -184,8 +191,13 @@ public:
     }
 
     int GetDocumentId(int index) const {
+        
+        return order_ids_.at(index);
+        /*
+        Исключение бросит, способом, указанным выше но информацию Get document: Incorrect INDEX мы не увидим
         if (index<0 || index> document_counter_ - 1 )throw out_of_range("Get document: Incorrect INDEX");
         else return order_ids_.at(index);
+        */
     }
 private:
     struct DocumentData {
@@ -232,10 +244,7 @@ private:
         if (ratings.empty()) {
             return 0;
         }
-        int rating_sum = 0;
-        for (const int rating : ratings) {
-            rating_sum += rating;
-        }
+        int rating_sum = accumulate(ratings.begin(), ratings.end(), 0);
         return rating_sum / static_cast<int>(ratings.size());
     }
 
@@ -246,6 +255,7 @@ private:
     };
 
     QueryWord ParseQueryWord(string text) const {
+        if (!IsAcceptQuery(text)) throw invalid_argument("Match document: Incorrect input string");
         bool is_minus = false;
         // Word shouldn't be empty
         if (text[0] == '-') {
@@ -261,6 +271,13 @@ private:
     };
 
     Query ParseQuery(const string& text) const {
+       /*
+       Уважаемый код-ревьюер, я выполнил ваше указание и вынес проверку text в функцию ParseQueryWord,
+       но я сделал бы ее здесь чтобы зря не тратить ресурсы на инициализацию обьекта Query и на выполнение 
+       SplitInToTheWord. 
+       */
+        
+        
         Query query;
         for (const string& word : SplitIntoWords(text)) {
             const QueryWord query_word = ParseQueryWord(word);
