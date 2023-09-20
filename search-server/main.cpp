@@ -3,13 +3,12 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include<stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
-#include <optional>
 
 using namespace std;
-
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 string ReadLine() {
