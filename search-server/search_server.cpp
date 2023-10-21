@@ -16,13 +16,15 @@ SearchServer::SearchServer(const std::string& stop_words_text)
  {
  }
 
-
-
-
-    void SearchServer::AddDocument(int document_id, const string& document, DocumentStatus status,
+void SearchServer::AddDocument(int document_id, const string& document, DocumentStatus status,
         const vector<int>& ratings) {
-        if (document_id < 0 || documents_.count(document_id) > 0)throw invalid_argument("Add document: Incorrect ID");
-        if (!IsAcceptQuery(document)) throw invalid_argument("Add document: Incorrect input string");
+        if (document_id < 0 ||
+            documents_.count(document_id) > 0) {
+            throw invalid_argument("Add document: Incorrect ID");
+        }
+        if (!IsAcceptQuery(document)) {
+            throw invalid_argument("Add document: Incorrect input string");
+        }
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
 
@@ -157,5 +159,7 @@ SearchServer::SearchServer(const std::string& stop_words_text)
     double SearchServer::ComputeWordInverseDocumentFreq(const string& word) const {
         return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
     }
+
+
 
     
